@@ -2,7 +2,7 @@
 
 """ This script aims to automate the process of starting frida-server
 on an Android device (for now). The script is a part of AndroidTamer
-project and is based on this issue: 
+project and is based on this issue:
 https://github.com/AndroidTamer/Tools_Repository/issues/234.
 
 This script performs following things:
@@ -19,6 +19,8 @@ This script performs following things:
 """
 
 import sys
+import os
+import os.path as path
 import subprocess
 import os
 import lzma
@@ -51,7 +53,7 @@ def device_exists():
 
 def get_device_arch():
     """ This function tries to determine the architecture of the device, so that
-    the correct version of Frida-server can be downloaded. The function, first, 
+    the correct version of Frida-server can be downloaded. The function, first,
     tries to get the output of `uname -m` and then it tries to matches it against
     some known values. If not, then it tries `getprop ro.product.cpu.abi`.
 
@@ -76,7 +78,7 @@ def get_device_arch():
         getprop_cmd = "{} shell getprop ro.product.cpu.abi".format(adb_path)
         getprop_archs = ["armeabi", "armeabi-v7a", "arm64-v8a", "x86", "x86_64"]
         # We know shell=True is bad, but should be fine here.
-        output = subprocess.check_output(getprop_cmd, shell=True).lower().strip()
+        output = str(subprocess.check_output(getprop_cmd, shell=True).lower().strip(), "utf-8")
 
         if output in getprop_archs:
             if output in ["armeabi", "armeabi-v7a"]:
@@ -96,7 +98,7 @@ def prepare_download_url(arch):
     return base_url.format(FRIDA_VERSION, FRIDA_VERSION, arch)
 
 def download_and_extract(url, fname):
-    """ This function downloads the given URL, extracts .xz archive 
+    """ This function downloads the given URL, extracts .xz archive
     as given file name.
 
     :returns True if successful, else False.
@@ -124,18 +126,19 @@ def download_and_extract(url, fname):
         print("\t[+] Writing file as: {}.".format(fname))
         with open(fname, "wb") as frida_server:
             frida_server.write(data)
+            os.remove(archive_name)
         return True
     return False
 
 def push_and_execute(fname):
     """This function pushes the file to device, makes it executable,
-    and then finally runs the binary. The function also saves the PID 
+    and then finally runs the binary. The function also saves the PID
     of process in 'frida.pid' file.
     """
     push_cmd = "{} push {} /data/local/tmp/frida-server".format(adb_path, fname)
     chmod_cmd = "{} shell chmod 0755 /data/local/tmp/frida-server".format(adb_path)
     execute_cmd = "{} shell su 0 '/data/local/tmp/frida-server' &".format(adb_path)
-    ps_cmd = "%s shell 'su 0 ps' | grep frida-server | awk '{print $2}' > frida.pid" % (adb_path)
+    ps_cmd = "%s shell 'su 0 ps' | grep frida-server | awk '{print $2}' > .frida.pid" % (adb_path)
 
     status_code = os.system(push_cmd)
     if status_code == 0:
@@ -163,7 +166,10 @@ def main():
         print("\t[+] Found arch: {}".format(arch))
         url = prepare_download_url(arch)
         fname = "frida-server-{}-android-{}".format(FRIDA_VERSION, arch)
-        if download_and_extract(url, fname):
+        if path.exists(fname):
+            print("\t[+] {} already downloaded.".format(fname))
+            push_and_execute(fname)
+        elif download_and_extract(url, fname):
             push_and_execute(fname)
     else:
         print("\t[-] Could not determine device's arch. Exiting.")

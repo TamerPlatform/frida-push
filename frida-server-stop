@@ -1,0 +1,11 @@
+#!/bin/sh
+
+if [ -f .frida.pid ]; then
+  pid=`cat .frida.pid`
+  echo "frida-server pid: $pid, stop it."
+  adb shell su 0 kill -9 $pid
+  rm .frida.pid
+  echo "frida-server stopped."
+else
+  echo "frida-server not started."
+fi
