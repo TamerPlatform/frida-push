@@ -76,7 +76,7 @@ def get_device_arch():
         getprop_cmd = "{} shell getprop ro.product.cpu.abi".format(adb_path)
         getprop_archs = ["armeabi", "armeabi-v7a", "arm64-v8a", "x86", "x86_64"]
         # We know shell=True is bad, but should be fine here.
-        output = subprocess.check_output(getprop_cmd, shell=True).lower().strip()
+        output = str(subprocess.check_output(getprop_cmd, shell=True).lower().strip(), "utf-8")
 
         if output in getprop_archs:
             if output in ["armeabi", "armeabi-v7a"]:
