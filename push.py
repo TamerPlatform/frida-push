@@ -21,7 +21,7 @@ This script performs following things:
 import sys
 import subprocess
 import os
-import lzma
+from backports import lzma
 import requests
 
 try:
@@ -41,7 +41,7 @@ def device_exists():
     """
     cmd = '{} devices -l | grep -v "List of devices attached"'.format(adb_path)
     # We know shell=True is bad, but should be fine here.
-    output = str(subprocess.check_output(cmd, shell=True).strip(), "utf-8")
+    output = subprocess.check_output(cmd, shell=True).strip().decode("utf-8")
     if output:
         print("\t[+] Found following device:")
         print("\t{}".format(output))
@@ -65,7 +65,7 @@ def get_device_arch():
     uname_cmd = "{} shell uname -m".format(adb_path)
     uname_archs = ["i386", "i686", "arm64", "arm", "x86_64"]
     # We know shell=True is bad, but should be fine here.
-    output = str(subprocess.check_output(uname_cmd, shell=True).lower().strip(), "utf-8")
+    output = subprocess.check_output(uname_cmd, shell=True).lower().strip().decode("utf-8")
 
     if output in uname_archs:
         if output in ["i386", "i686"]:
@@ -76,7 +76,7 @@ def get_device_arch():
         getprop_cmd = "{} shell getprop ro.product.cpu.abi".format(adb_path)
         getprop_archs = ["armeabi", "armeabi-v7a", "arm64-v8a", "x86", "x86_64"]
         # We know shell=True is bad, but should be fine here.
-        output = str(subprocess.check_output(getprop_cmd, shell=True).lower().strip(), "utf-8")
+        output = subprocess.check_output(getprop_cmd, shell=True).lower().strip().decode("utf-8")
 
         if output in getprop_archs:
             if output in ["armeabi", "armeabi-v7a"]:
