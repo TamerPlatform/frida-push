@@ -134,6 +134,7 @@ def push_and_execute(fname):
     """
     push_cmd = "{} push {} /data/local/tmp/frida-server".format(adb_path, fname)
     chmod_cmd = "{} shell chmod 0755 /data/local/tmp/frida-server".format(adb_path)
+    kill_cmd = "{} shell su 0 'killall frida-server'".format(adb_path)
     execute_cmd = "{} shell su 0 '/data/local/tmp/frida-server' &".format(adb_path)
     ps_cmd = "%s shell 'su 0 ps' | grep frida-server | awk '{print $2}' > frida.pid" % (adb_path)
 
@@ -141,6 +142,9 @@ def push_and_execute(fname):
     if status_code == 0:
         print("\t[+] File pushed to device successfully.")
         os.system(chmod_cmd)
+        if os.path.exists('frida.pid'):
+            print("\t[+] Killing all frida-server on device.")
+            os.system(kill_cmd)
         print("\t[+] Executing frida-server on device.")
         os.system(execute_cmd)
         print("\t[+] Fetching the PID of frida-server and saving it to file.")
