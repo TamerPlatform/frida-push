@@ -3,6 +3,11 @@ Wrapper tool to identify the remote device and push device specific frida-server
 
 ## Installing
 
+# Dependencies
+```bash
+sudo apt-get install -y liblzma-dev
+```
+
 ```bash
 sudo pip install frida-push
 ```
